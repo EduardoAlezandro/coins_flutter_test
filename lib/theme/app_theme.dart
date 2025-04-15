@@ -1,8 +1,6 @@
-// lib/themes/app_theme.dart
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Tema Claro
   static ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: Colors.blue,
@@ -11,12 +9,9 @@ class AppTheme {
       backgroundColor: Colors.blue,
       foregroundColor: Colors.white,
     ),
-    textTheme: TextTheme(
-      bodyMedium: TextStyle(color: Colors.black),
-    ),
+    textTheme: TextTheme(bodyMedium: TextStyle(color: Colors.black)),
   );
 
-  // Tema Dark
   static ThemeData darkTheme = ThemeData(
     brightness: Brightness.dark,
     primaryColor: Colors.blueGrey,
@@ -25,8 +20,6 @@ class AppTheme {
       backgroundColor: Colors.blueGrey,
       foregroundColor: Colors.white,
     ),
-    textTheme: TextTheme(
-      bodyMedium: TextStyle(color: Colors.white),
-    ),
+    textTheme: TextTheme(bodyMedium: TextStyle(color: Colors.white)),
   );
 }

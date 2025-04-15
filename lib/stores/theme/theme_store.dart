@@ -1,4 +1,3 @@
-// lib/stores/theme_store.dart
 import 'package:mobx/mobx.dart';
 
 part 'theme_store.g.dart';
