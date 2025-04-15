@@ -23,9 +23,15 @@ class ApiService {
     );
   }
 
-  Future<dynamic> get(String endpoint) async {
+  Future<dynamic> get(
+    String endpoint, {
+    Map<String, String>? queryParameters,
+  }) async {
     try {
-      final response = await _dio.get(endpoint);
+      final response = await _dio.get(
+        endpoint,
+        queryParameters: queryParameters,
+      );
       return response.data;
     } catch (e) {
       throw Exception('Failed to load data: $e');

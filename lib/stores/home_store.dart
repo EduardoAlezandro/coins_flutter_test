@@ -1,46 +1,43 @@
+// lib/stores/home_store.dart
+import 'package:coins_flutter_test/models/coins/coin_model.dart';
+import 'package:coins_flutter_test/services/crypto_coins_service.dart';
 import 'package:mobx/mobx.dart';
-import '../models/crypto_model.dart';
+import 'package:get/get.dart';
 
 part 'home_store.g.dart';
 
 class HomeStore = _HomeStoreBase with _$HomeStore;
 
 abstract class _HomeStoreBase with Store {
+  final CryptoCoinsService _cryptoCoinsService = Get.find();
+
   @observable
-  List<CryptoModel> cryptoList = [
-    CryptoModel(
-      id: 'bitcoin',
-      name: 'Bitcoin',
-      symbol: 'BTC',
-      price: 27000,
-      percentChange: 2.5,
-      marketCap: 500000000000,
-    ),
-    CryptoModel(
-      id: 'ethereum',
-      name: 'Ethereum',
-      symbol: 'ETH',
-      price: 1800,
-      percentChange: -1.2,
-      marketCap: 200000000000,
-    ),
-    CryptoModel(
-      id: 'cardano',
-      name: 'Cardano',
-      symbol: 'ADA',
-      price: 0.45,
-      percentChange: 0.8,
-      marketCap: 15000000000,
-    ),
-  ];
+  ObservableList<CoinModel> cryptoList = ObservableList<CoinModel>();
 
   @observable
   String searchQuery = '';
 
+  @observable
+  bool isLoading = true;
+
+  @action
+  Future<void> fetchCryptoList() async {
+    try {
+      isLoading = true;
+      final list = await _cryptoCoinsService.getCoinList();
+      cryptoList = ObservableList.of(list);
+    } catch (e) {
+      print('Error fetching crypto list: $e');
+      cryptoList.clear();
+    } finally {
+      isLoading = false;
+    }
+  }
+
   @computed
-  List<CryptoModel> get filteredCryptoList {
+  List<CoinModel> get filteredCryptoList {
     if (searchQuery.isEmpty) {
-      return cryptoList;
+      return cryptoList.toList();
     }
     return cryptoList
         .where((crypto) =>

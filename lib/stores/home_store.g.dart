@@ -9,11 +9,11 @@ part of 'home_store.dart';
 // ignore_for_file: non_constant_identifier_names, unnecessary_brace_in_string_interps, unnecessary_lambdas, prefer_expression_function_bodies, lines_longer_than_80_chars, avoid_as, avoid_annotating_with_dynamic, no_leading_underscores_for_local_identifiers
 
 mixin _$HomeStore on _HomeStoreBase, Store {
-  Computed<List<CryptoModel>>? _$filteredCryptoListComputed;
+  Computed<List<CoinModel>>? _$filteredCryptoListComputed;
 
   @override
-  List<CryptoModel> get filteredCryptoList => (_$filteredCryptoListComputed ??=
-          Computed<List<CryptoModel>>(() => super.filteredCryptoList,
+  List<CoinModel> get filteredCryptoList => (_$filteredCryptoListComputed ??=
+          Computed<List<CoinModel>>(() => super.filteredCryptoList,
               name: '_HomeStoreBase.filteredCryptoList'))
       .value;
 
@@ -21,13 +21,13 @@ mixin _$HomeStore on _HomeStoreBase, Store {
       Atom(name: '_HomeStoreBase.cryptoList', context: context);
 
   @override
-  List<CryptoModel> get cryptoList {
+  ObservableList<CoinModel> get cryptoList {
     _$cryptoListAtom.reportRead();
     return super.cryptoList;
   }
 
   @override
-  set cryptoList(List<CryptoModel> value) {
+  set cryptoList(ObservableList<CoinModel> value) {
     _$cryptoListAtom.reportWrite(value, super.cryptoList, () {
       super.cryptoList = value;
     });
@@ -49,6 +49,30 @@ mixin _$HomeStore on _HomeStoreBase, Store {
     });
   }
 
+  late final _$isLoadingAtom =
+      Atom(name: '_HomeStoreBase.isLoading', context: context);
+
+  @override
+  bool get isLoading {
+    _$isLoadingAtom.reportRead();
+    return super.isLoading;
+  }
+
+  @override
+  set isLoading(bool value) {
+    _$isLoadingAtom.reportWrite(value, super.isLoading, () {
+      super.isLoading = value;
+    });
+  }
+
+  late final _$fetchCryptoListAsyncAction =
+      AsyncAction('_HomeStoreBase.fetchCryptoList', context: context);
+
+  @override
+  Future<void> fetchCryptoList() {
+    return _$fetchCryptoListAsyncAction.run(() => super.fetchCryptoList());
+  }
+
   late final _$_HomeStoreBaseActionController =
       ActionController(name: '_HomeStoreBase', context: context);
 
@@ -68,6 +92,7 @@ mixin _$HomeStore on _HomeStoreBase, Store {
     return '''
 cryptoList: ${cryptoList},
 searchQuery: ${searchQuery},
+isLoading: ${isLoading},
 filteredCryptoList: ${filteredCryptoList}
     ''';
   }
