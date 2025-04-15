@@ -1,24 +1,25 @@
+// lib/main.dart
+import 'package:coins_flutter_test/stores/theme/theme_store.dart';
+import 'package:coins_flutter_test/theme/app_theme.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
-import 'package:hive_flutter/hive_flutter.dart';
+import 'package:get/get.dart';
+import 'bindings/app_bindings.dart';
 
-void main() async {
-  await dotenv.load(fileName: ".env");
-  await Hive.initFlutter();
-  runApp(const MainApp());
+void main() {
+  runApp(MyApp());
 }
 
-class MainApp extends StatelessWidget {
-  const MainApp({super.key});
-
+class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Hello World!'),
-        ),
-      ),
+    return GetMaterialApp(
+      title: 'Flutter Demo',
+      initialBinding: AppBindings(), 
+      theme: AppTheme.lightTheme,   
+      darkTheme: AppTheme.darkTheme, 
+      themeMode: Get.find<ThemeStore>().isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: HomePage(),
+      
     );
   }
 }
