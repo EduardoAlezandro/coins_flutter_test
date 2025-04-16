@@ -11,6 +11,8 @@ class HomePage extends GetView<HomeStore> {
   final DateFormat _hourFormat = DateFormat('HH:mm');
   final NumberFormat _priceFormat = NumberFormat.currency(symbol: '\$');
 
+  HomePage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

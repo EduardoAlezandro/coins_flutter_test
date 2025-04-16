@@ -1,6 +1,7 @@
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/services/crypto_coins_service.dart';
 import 'package:coins_flutter_test/stores/favorite/favorite_store.dart';
+import 'package:flutter/foundation.dart';
 import 'package:mobx/mobx.dart';
 import 'package:get/get.dart';
 
@@ -53,7 +54,9 @@ abstract class _SearchCoinsStore with Store {
       hasMore = coins.length >= 250;
       _updateDisplayedCoins();
     } catch (e) {
-      print('Error loading initial coins: $e');
+      if (kDebugMode) {
+        print('Error loading initial coins: $e');
+      }
     } finally {
       isLoading = false;
     }
@@ -74,7 +77,9 @@ abstract class _SearchCoinsStore with Store {
         _updateDisplayedCoins(); // Adicionado
       }
     } catch (e) {
-      print('Error loading more coins: $e');
+      if (kDebugMode) {
+        print('Error loading more coins: $e');
+      }
     } finally {
       isLoadingMore = false;
     }

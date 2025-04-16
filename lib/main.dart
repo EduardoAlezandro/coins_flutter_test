@@ -1,5 +1,7 @@
+import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/repository/cache_repository.dart';
 import 'package:coins_flutter_test/theme/app_theme.dart';
+import 'package:coins_flutter_test/views/detail/coin_detail.dart';
 import 'package:coins_flutter_test/views/favorite/favorite_page.dart';
 import 'package:coins_flutter_test/views/searchCoins/search_coins_page.dart';
 import 'package:coins_flutter_test/views/home/home_page.dart';
@@ -12,7 +14,12 @@ import 'bindings/app_bindings.dart';
 void main() async {
   await dotenv.load(fileName: ".env");
   await Hive.initFlutter();
-  
+    await Hive.initFlutter();
+
+  if (!Hive.isAdapterRegistered(0)) {
+    Hive.registerAdapter(CoinModelHiveAdapter());
+  }
+
   final cacheRepository = CacheRepository();
   await cacheRepository.init();
   runApp(MyApp());
@@ -31,13 +38,13 @@ class MyApp extends StatelessWidget {
       themeMode: ThemeMode.system,
       initialRoute: '/home',
       getPages: [
-        GetPage(
-          name: '/home',
-          page: () => HomePage(),
+        GetPage(name: '/home', page: () => HomePage(), binding: AppBindings()),
+        GetPage(name: '/favorites', page: () => FavoritesPage()),
+ GetPage(
+          name: '/detail/:coinId',
+          page: () => CoinDetailScreen(coinId: Get.parameters['coinId']!),
           binding: AppBindings(),
         ),
-        GetPage(name: '/favorites', page: () => FavoritesPage()),
-        
         GetPage(
           name: '/search',
           page: () => SearchCoins(),

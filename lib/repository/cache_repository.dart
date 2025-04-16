@@ -1,51 +1,68 @@
-// cache_repository.dart
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 
 class CacheRepository {
-  static Box<List<CoinModelHive>>? _box;
+  static final CacheRepository _instance = CacheRepository._internal();
+  static Box<List<CoinModelHive>>? _coinsBox;
+  static Box? _metaBox;
+
   static const _coinsBoxName = 'coinsCache';
+  static const _metaBoxName = 'coinsMetaCache';
   static const _lastUpdateKey = 'lastUpdate';
 
+  CacheRepository._internal();
+  factory CacheRepository() => _instance;
+
   Future<void> init() async {
-    await Hive.openBox(_coinsBoxName);
+    if (_coinsBox == null || !_coinsBox!.isOpen) {
+      _coinsBox = Hive.isBoxOpen(_coinsBoxName)
+          ? Hive.box<List<CoinModelHive>>(_coinsBoxName)
+          : await Hive.openBox<List<CoinModelHive>>(_coinsBoxName);
+    }
+
+    if (_metaBox == null || !_metaBox!.isOpen) {
+      _metaBox = Hive.isBoxOpen(_metaBoxName)
+          ? Hive.box(_metaBoxName)
+          : await Hive.openBox(_metaBoxName);
+    }
   }
 
   Future<void> close() async {
-    if (_box != null && _box!.isOpen) {
-      await _box!.close();
-    }
-  }
-
-  Future<Box<List<CoinModelHive>>> _getBox() async {
-    if (_box == null || !_box!.isOpen) {
-      _box = await Hive.openBox<List<CoinModelHive>>('coinsCache');
-    }
-    return _box!;
+    if (_coinsBox?.isOpen == true) await _coinsBox!.close();
+    if (_metaBox?.isOpen == true) await _metaBox!.close();
   }
 
   Future<void> saveCoins(List<CoinModelHive> coins) async {
     try {
-      final box = await _getBox();
-      await box.put('coins', coins);
+      await init();
+       await _coinsBox!.add(coins);
+      await _metaBox!.put(
+        _lastUpdateKey,
+        DateTime.now().millisecondsSinceEpoch,
+      );
     } catch (e) {
-      print('Error saving to cache: $e');
+      if (kDebugMode) {
+        print('Error saving to cache: $e');
+      }
     }
   }
 
   Future<List<CoinModelHive>> getCachedCoins() async {
     try {
-      final box = await _getBox();
-      return box.get('coins')?.cast<CoinModelHive>() ?? [];
+      await init();
+      return _coinsBox!.get('coins')?.cast<CoinModelHive>() ?? [];
     } catch (e) {
-      print('Error accessing cache: $e');
+      if (kDebugMode) {
+        print('Error accessing cache: $e');
+      }
       return [];
     }
   }
 
   DateTime? getLastUpdate() {
-    final box = Hive.box(_coinsBoxName);
-    final lastUpdate = box.get(_lastUpdateKey) as int?;
+    if (_metaBox == null || !_metaBox!.isOpen) return null;
+    final lastUpdate = _metaBox!.get(_lastUpdateKey) as int?;
     return lastUpdate != null
         ? DateTime.fromMillisecondsSinceEpoch(lastUpdate)
         : null;

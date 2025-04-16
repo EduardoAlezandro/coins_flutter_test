@@ -1,5 +1,6 @@
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/stores/favorite/favorite_store.dart';
+import 'package:coins_flutter_test/views/detail/coin_detail.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -57,6 +58,11 @@ class SearchCoins extends GetView<SearchCoinsStore> {
                           return Observer(
                             builder:
                                 (_) => ListTile(
+                                  onTap: () {
+                                    Get.to(
+                                      () => CoinDetailScreen(coinId: crypto.id),
+                                    );
+                                  },
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 8,
@@ -231,29 +237,34 @@ class _PaginationControls extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Observer(
-      builder: (_) => Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            IconButton(
-              icon: const Icon(Icons.chevron_left),
-              onPressed: controller.hasPreviousPage
-                  ? () => controller.previousPage()
-                  : null,
+      builder:
+          (_) => Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.chevron_left),
+                  onPressed:
+                      controller.hasPreviousPage
+                          ? () => controller.previousPage()
+                          : null,
+                ),
+                Text(
+                  'Página ${controller.currentPage} de ${controller.totalPages}',
+                ),
+                IconButton(
+                  icon: const Icon(Icons.chevron_right),
+                  onPressed:
+                      controller.hasNextPage
+                          ? () async =>
+                              await controller
+                                  .nextPage() // Modificado
+                          : null,
+                ),
+              ],
             ),
-            Text(
-              'Página ${controller.currentPage} de ${controller.totalPages}',
-            ),
-            IconButton(
-              icon: const Icon(Icons.chevron_right),
-              onPressed: controller.hasNextPage
-                  ? () async => await controller.nextPage() // Modificado
-                  : null,
-            ),
-          ],
-        ),
-      ),
+          ),
     );
   }
 }

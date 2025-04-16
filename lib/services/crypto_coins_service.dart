@@ -1,8 +1,8 @@
-import 'package:coins_flutter_test/models/coins/coin_history_model.dart';
 import 'package:coins_flutter_test/models/coins/coin_history_range_model.dart';
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/models/coins/coins_detail_model.dart';
 import 'package:coins_flutter_test/repository/cache_repository.dart';
+import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 
@@ -12,7 +12,6 @@ class CryptoCoinsService {
 
   static const _initialPageSize = 250;
   static const _paginationSize = 50;
-  static const _maxCacheAge = Duration(days: 2);
 
   Future<List<CoinModelHive>> getInitialCoins() async {
     if (await _shouldUseCache()) {
@@ -100,7 +99,9 @@ class CryptoCoinsService {
           .map<CoinModelHive>((json) => CoinModelHive.fromJson(json))
           .toList();
     } catch (e) {
-      print('Error loading batch: $e');
+      if (kDebugMode) {
+        print('Error loading batch: $e');
+      }
       return [];
     }
   }
@@ -126,6 +127,7 @@ class CryptoCoinsService {
     bool sparkline = false,
   }) async {
     try {
+      // Constrói os parâmetros da query
       final queryParams = <String, String>{
         'localization': localization.toString(),
         'tickers': tickers.toString(),
@@ -135,6 +137,7 @@ class CryptoCoinsService {
         'sparkline': sparkline.toString(),
       };
 
+      // Faz a chamada à API
       final response = await _apiService.get(
         'coins/$id',
         queryParameters: queryParams,
@@ -142,7 +145,7 @@ class CryptoCoinsService {
 
       return CoinDetailModel.fromJson(response);
     } catch (e) {
-      throw Exception('Error fetching coin details: $e');
+      throw Exception('Erro ao buscar detalhes da moeda: $e');
     }
   }
 
