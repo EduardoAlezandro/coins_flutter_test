@@ -1,75 +1,119 @@
 import 'package:coins_flutter_test/models/coins/coin_history_model.dart';
-import 'package:coins_flutter_test/models/coins/coin_model.dart';
+import 'package:coins_flutter_test/models/coins/coin_history_range_model.dart';
+import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/models/coins/coins_detail_model.dart';
+import 'package:coins_flutter_test/repository/cache_repository.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 
 class CryptoCoinsService {
   final ApiService _apiService = Get.find();
+  final CacheRepository _cacheRepository = Get.find();
 
-  Future<List<CoinModel>> getCoinList({bool includePlatform = false}) async {
+  static const _initialPageSize = 250;
+  static const _paginationSize = 50;
+  static const _maxCacheAge = Duration(days: 2);
+
+  Future<List<CoinModelHive>> getInitialCoins() async {
+    if (await _shouldUseCache()) {
+      return _cacheRepository.getCachedCoins();
+    }
+    return _refreshCoins();
+  }
+
+  Future<List<CoinModelHive>> getMoreCoins(int currentCount) async {
+    if (await _shouldUseCache() && currentCount < _initialPageSize) {
+      return _getCachedPaginated(currentCount);
+    }
+    return _fetchNewBatch(currentCount);
+  }
+
+  Future<bool> _shouldUseCache() async {
+    if (!_cacheRepository.shouldRefresh()) {
+      final cachedCoins = await _cacheRepository.getCachedCoins();
+      return cachedCoins.isNotEmpty;
+    }
+    return false;
+  }
+
+  Future<List<CoinModelHive>> _refreshCoins() async {
     try {
-      final queryParams = {'include_platform': includePlatform.toString()};
-
-      final response = await _apiService.get(
-        'coins/list',
-        queryParameters: queryParams,
-      );
-
-      return (response as List)
-          .map((coinJson) => CoinModel.fromJson(coinJson))
-          .toList();
+      final newCoins = await _getCoinBatch(page: 1, perPage: _initialPageSize);
+      await _cacheRepository.saveCoins(newCoins);
+      return newCoins;
     } catch (e) {
-      throw Exception('Error fetching coin list: $e');
+      return _cacheRepository.getCachedCoins();
     }
   }
 
-  Future<List<CoinModel>> getCoinMarkets({
-    required String vsCurrency,
-    List<String>? ids,
-    List<String>? names,
-    List<String>? symbols,
-    String? category,
-    String? order = 'market_cap_desc',
-    int perPage = 100,
-    int page = 1,
-    bool sparkline = false,
-    List<String>? priceChangePercentage,
-    String locale = 'en',
-    String precision = 'full',
+  Future<List<CoinModelHive>> _fetchNewBatch(int currentCount) async {
+    try {
+      final newCoins = await _getCoinBatch(
+        page: (currentCount ~/ _paginationSize) + 1,
+        perPage: _paginationSize,
+      );
+
+      await _mergeWithCache(newCoins);
+      return newCoins;
+    } catch (e) {
+      return _cacheRepository.getCachedCoins();
+    }
+  }
+
+  Future<void> _mergeWithCache(List<CoinModelHive> newCoins) async {
+    final cachedCoins = await _cacheRepository.getCachedCoins();
+    final mergedCoins = _mergeCoinLists(cachedCoins, newCoins);
+    await _cacheRepository.saveCoins(mergedCoins);
+  }
+
+  List<CoinModelHive> _mergeCoinLists(
+    List<CoinModelHive> existing,
+    List<CoinModelHive> newCoins,
+  ) {
+    final mergedMap = {for (var c in existing) c.id: c};
+    mergedMap.addAll({for (var c in newCoins) c.id: c});
+    return mergedMap.values.toList();
+  }
+
+  Future<List<CoinModelHive>> _getCachedPaginated(int currentCount) {
+    return _cacheRepository.getCachedCoins().then((coins) {
+      final startIndex = currentCount;
+      final endIndex = startIndex + _paginationSize;
+      return coins.sublist(
+        startIndex.clamp(0, coins.length),
+        endIndex.clamp(0, coins.length),
+      );
+    });
+  }
+
+  Future<List<CoinModelHive>> _getCoinBatch({
+    required int page,
+    required int perPage,
   }) async {
     try {
-      final rawParams = {
-        'vs_currency': vsCurrency,
-        'ids': ids?.join(','),
-        'names': names?.join(','),
-        'symbols': symbols?.join(','),
-        'category': category,
-        'order': order,
-        'per_page': perPage.toString(),
-        'page': page.toString(),
-        'sparkline': sparkline.toString(),
-        'price_change_percentage': priceChangePercentage?.join(','),
-        'locale': locale,
-        'precision': precision,
-      };
-
-      final queryParams = <String, String>{
-        for (var entry in rawParams.entries)
-          if (entry.value != null) entry.key: entry.value!,
-      };
-
       final response = await _apiService.get(
         'coins/markets',
-        queryParameters: queryParams,
+        queryParameters: _buildQueryParams(page, perPage),
       );
 
       return (response as List)
-          .map((marketJson) => CoinModel.fromJson(marketJson))
+          .map<CoinModelHive>((json) => CoinModelHive.fromJson(json))
           .toList();
     } catch (e) {
-      throw Exception('Error fetching coin markets: $e');
+      print('Error loading batch: $e');
+      return [];
     }
+  }
+
+  Map<String, String> _buildQueryParams(int page, int perPage) {
+    return {
+      'vs_currency': 'usd',
+      'sparkline': 'true',
+      'price_change_percentage': '24h',
+      'order': 'market_cap_desc',
+      'per_page': perPage.toString(),
+      'page': page.toString(),
+    };
   }
 
   Future<CoinDetailModel> getCoinDetails({
@@ -102,16 +146,43 @@ class CryptoCoinsService {
     }
   }
 
-  Future<CoinHistoryModel> getCoinHistory({
-    required String id,
-    required String date,
-    bool localization = false,
+  Future<List<CoinHistoryData>> getCoinHistoryRange({
+    required String coinId,
+    required DateTime startDate,
+    required DateTime endDate,
+    String vsCurrency = 'usd',
+    String precision = '2',
   }) async {
-    final response = await _apiService.get(
-      '/coins/$id/history',
-      queryParameters: {'date': date, 'localization': localization.toString()},
-    );
+    try {
+      final response = await _apiService.get(
+        'coins/$coinId/market_chart/range',
+        queryParameters: {
+          'vs_currency': vsCurrency,
+          'from': (startDate.millisecondsSinceEpoch ~/ 1000).toString(),
+          'to': (endDate.millisecondsSinceEpoch ~/ 1000).toString(),
+          'precision': precision,
+        },
+      );
 
-    return CoinHistoryModel.fromJson(response);
+      final prices =
+          (response['prices'] as List)
+              .map(
+                (price) => CoinHistoryData.fromJson([
+                  price[0],
+                  price[1],
+                  (response['market_caps'] as List).firstWhere(
+                    (mc) => mc[0] == price[0],
+                  )[1],
+                  (response['total_volumes'] as List).firstWhere(
+                    (vol) => vol[0] == price[0],
+                  )[1],
+                ]),
+              )
+              .toList();
+
+      return prices;
+    } catch (e) {
+      throw Exception('Failed to load historical data: $e');
+    }
   }
 }
