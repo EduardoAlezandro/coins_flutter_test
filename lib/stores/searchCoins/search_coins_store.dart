@@ -1,5 +1,5 @@
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
-import 'package:coins_flutter_test/services/crypto_coins_service.dart';
+import 'package:coins_flutter_test/services/coins_service.dart';
 import 'package:coins_flutter_test/stores/favorite/favorite_store.dart';
 import 'package:flutter/foundation.dart';
 import 'package:mobx/mobx.dart';
@@ -10,7 +10,7 @@ part 'search_coins_store.g.dart';
 class SearchCoinsStore = _SearchCoinsStore with _$SearchCoinsStore;
 
 abstract class _SearchCoinsStore with Store {
-  final CryptoCoinsService _cryptoCoinsService = Get.find();
+  final CoinsService _cryptoCoinsService = Get.find();
   final FavoriteStore _favoriteStore = Get.find();
 
   @observable
@@ -74,7 +74,7 @@ abstract class _SearchCoinsStore with Store {
       } else {
         allCoins.addAll(newCoins);
         hasMore = newCoins.length >= 50;
-        _updateDisplayedCoins(); // Adicionado
+        _updateDisplayedCoins();
       }
     } catch (e) {
       if (kDebugMode) {
@@ -138,7 +138,6 @@ abstract class _SearchCoinsStore with Store {
 
   @action
   Future<void> nextPage() async {
-    // Modificado para async
     if (currentPage < totalPages) {
       currentPage++;
       _updateDisplayedCoins();

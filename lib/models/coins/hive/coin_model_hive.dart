@@ -1,4 +1,3 @@
-// coin_model.dart
 import 'package:hive/hive.dart';
 
 part 'coin_model_hive.g.dart';
@@ -17,7 +16,6 @@ class CoinModelHive extends HiveObject {
   @HiveField(3)
   final Map<String, dynamic>? platforms;
 
-  // Novos campos adicionados
   @HiveField(4)
   final double currentPrice;
 
@@ -33,6 +31,9 @@ class CoinModelHive extends HiveObject {
   @HiveField(8)
   final List<double> sparklineIn7d;
 
+  @HiveField(9)
+  final String? image;
+
   CoinModelHive({
     required this.id,
     required this.symbol,
@@ -43,6 +44,7 @@ class CoinModelHive extends HiveObject {
     required this.marketCap,
     required this.totalVolume,
     required this.sparklineIn7d,
+    this.image,
   });
 
   factory CoinModelHive.fromJson(Map<String, dynamic> json) {
@@ -50,17 +52,37 @@ class CoinModelHive extends HiveObject {
       id: json['id'],
       symbol: json['symbol'],
       name: json['name'],
-      platforms: json['platforms'] != null
-          ? Map<String, dynamic>.from(json['platforms'])
-          : null,
-      // Novos campos mapeados
+      platforms:
+          json['platforms'] != null
+              ? Map<String, dynamic>.from(json['platforms'])
+              : null,
       currentPrice: json['current_price']?.toDouble() ?? 0.0,
-      priceChangePercentage24h: json['price_change_percentage_24h']?.toDouble() ?? 0.0,
+      priceChangePercentage24h:
+          json['price_change_percentage_24h']?.toDouble() ?? 0.0,
       marketCap: json['market_cap']?.toDouble() ?? 0.0,
       totalVolume: json['total_volume']?.toDouble() ?? 0.0,
-      sparklineIn7d: json['sparkline_in_7d']?['price'] != null
-          ? List<double>.from(json['sparkline_in_7d']['price'].map((x) => x.toDouble()))
-          : [],
+      sparklineIn7d:
+          json['sparkline_in_7d']?['price'] != null
+              ? List<double>.from(
+                json['sparkline_in_7d']['price'].map((x) => x.toDouble()),
+              )
+              : [],
+      image: json['image'] as String?,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'symbol': symbol,
+      'name': name,
+      'platforms': platforms,
+      'current_price': currentPrice,
+      'price_change_percentage_24h': priceChangePercentage24h,
+      'market_cap': marketCap,
+      'total_volume': totalVolume,
+      'sparkline_in_7d': {'price': sparklineIn7d},
+      'image': image,
+    };
   }
 }

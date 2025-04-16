@@ -1,20 +1,18 @@
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/stores/favorite/favorite_store.dart';
-import 'package:coins_flutter_test/stores/searchCoins/search_coins_store.dart';
-import 'package:coins_flutter_test/views/detail/coin_detail.dart';
+import 'package:coins_flutter_test/views/detail/coin_detail_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import 'package:fl_chart/fl_chart.dart';
 
-class FavoritesPage extends StatelessWidget {
-  const FavoritesPage({super.key});
+class FavoritesView extends StatelessWidget {
+  const FavoritesView({super.key});
 
   @override
   Widget build(BuildContext context) {
     final favoriteStore = Get.find<FavoriteStore>();
-    final homeStore = Get.find<SearchCoinsStore>();
 
     return Scaffold(
       appBar: AppBar(title: const Text('Moedas Favoritas')),
@@ -24,10 +22,7 @@ class FavoritesPage extends StatelessWidget {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final favoriteCoins =
-              homeStore.allCoins
-                  .where((coin) => favoriteStore.favoriteIds.contains(coin.id))
-                  .toList();
+          final favoriteCoins = favoriteStore.favoriteCoins;
 
           if (favoriteCoins.isEmpty) {
             return const Center(child: Text('Nenhuma moeda favoritada'));
@@ -37,50 +32,65 @@ class FavoritesPage extends StatelessWidget {
             itemCount: favoriteCoins.length,
             itemBuilder: (context, index) {
               final crypto = favoriteCoins[index];
-              return Observer(
-                builder:
-                    (_) => ListTile(
-                      onTap: () {
-                        // Navegar para a tela de detalhes
-                        Get.to(() => CoinDetailScreen(coinId: crypto.id));
-                      },
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      leading: CircleAvatar(
-                        backgroundColor: Colors.grey[200],
-                        child: Text(crypto.symbol.toUpperCase()),
-                      ),
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            crypto.name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const SizedBox(height: 4),
-                          _buildPriceRow(crypto),
-                        ],
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildSparklineChart(crypto.sparklineIn7d),
-                          _buildMarketData(crypto),
-                        ],
-                      ),
-                      trailing: IconButton(
-                        icon: Icon(Icons.favorite, color: Colors.red),
-                        onPressed: () => favoriteStore.toggleFavorite(crypto),
-                      ),
+              return ListTile(
+                onTap: () {
+                  Get.to(() => CoinDetailView(coinId: crypto.id));
+                },
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                leading: _buildLeading(crypto),
+                title: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      crypto.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
+                    const SizedBox(height: 4),
+                    _buildPriceRow(crypto),
+                  ],
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildSparklineChart(crypto.sparklineIn7d),
+                    _buildMarketData(crypto),
+                  ],
+                ),
+                trailing: IconButton(
+                  icon: Icon(Icons.favorite, color: Colors.red),
+                  onPressed: () => favoriteStore.toggleFavorite(crypto),
+                ),
               );
             },
           );
         },
       ),
     );
+  }
+
+  Widget _buildLeading(CoinModelHive crypto) {
+    return crypto.image != null && crypto.image!.isNotEmpty
+        ? ClipOval(
+          child: Image.network(
+            crypto.image!,
+            width: 48,
+            height: 48,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return CircleAvatar(
+                backgroundColor: Colors.grey[200],
+                child: Text(crypto.symbol.toUpperCase()),
+              );
+            },
+          ),
+        )
+        : CircleAvatar(
+          backgroundColor: Colors.grey[200],
+          child: Text(crypto.symbol.toUpperCase()),
+        );
   }
 
   Widget _buildPriceRow(CoinModelHive crypto) {
@@ -111,6 +121,16 @@ class FavoritesPage extends StatelessWidget {
   }
 
   Widget _buildSparklineChart(List<double> sparkline) {
+    if (sparkline.isEmpty) {
+      return SizedBox(
+        height: 40,
+        child: Center(child: Text('Sem dados disponíveis')),
+      );
+    }
+
+    final minY = sparkline.reduce((a, b) => a < b ? a : b);
+    final maxY = sparkline.reduce((a, b) => a > b ? a : b);
+
     return SizedBox(
       height: 40,
       child: LineChart(
@@ -120,8 +140,8 @@ class FavoritesPage extends StatelessWidget {
           borderData: FlBorderData(show: false),
           minX: 0,
           maxX: sparkline.length.toDouble() - 1,
-          minY: sparkline.reduce((a, b) => a < b ? a : b),
-          maxY: sparkline.reduce((a, b) => a > b ? a : b),
+          minY: minY,
+          maxY: maxY,
           lineBarsData: [
             LineChartBarData(
               spots:

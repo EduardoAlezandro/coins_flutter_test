@@ -26,13 +26,14 @@ class CoinModelHiveAdapter extends TypeAdapter<CoinModelHive> {
       marketCap: fields[6] as double,
       totalVolume: fields[7] as double,
       sparklineIn7d: (fields[8] as List).cast<double>(),
+      image: fields[9] as String?,
     );
   }
 
   @override
   void write(BinaryWriter writer, CoinModelHive obj) {
     writer
-      ..writeByte(9)
+      ..writeByte(10)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -50,7 +51,9 @@ class CoinModelHiveAdapter extends TypeAdapter<CoinModelHive> {
       ..writeByte(7)
       ..write(obj.totalVolume)
       ..writeByte(8)
-      ..write(obj.sparklineIn7d);
+      ..write(obj.sparklineIn7d)
+      ..writeByte(9)
+      ..write(obj.image);
   }
 
   @override

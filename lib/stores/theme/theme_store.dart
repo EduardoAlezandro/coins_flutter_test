@@ -6,10 +6,10 @@ class ThemeStore = _ThemeStoreBase with _$ThemeStore;
 
 abstract class _ThemeStoreBase with Store {
   @observable
-  bool isDarkMode = false;
+  bool isDarkMode = true;
 
   @action
   void toggleTheme() {
-    isDarkMode = !isDarkMode;
+    isDarkMode = isDarkMode;
   }
 }

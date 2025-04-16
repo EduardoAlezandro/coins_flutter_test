@@ -1,4 +1,3 @@
-// coin_history_data.dart
 class CoinHistoryData {
   final DateTime timestamp;
   final double price;

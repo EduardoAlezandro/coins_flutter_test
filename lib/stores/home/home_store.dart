@@ -1,9 +1,8 @@
-// stores/home/home_store.dart
 import 'dart:math';
 import 'package:mobx/mobx.dart';
 import 'package:get/get.dart';
 import 'package:fl_chart/fl_chart.dart';
-import 'package:coins_flutter_test/services/crypto_coins_service.dart';
+import 'package:coins_flutter_test/services/coins_service.dart';
 import 'package:coins_flutter_test/stores/favorite/favorite_store.dart';
 
 part 'home_store.g.dart';
@@ -11,7 +10,7 @@ part 'home_store.g.dart';
 class HomeStore = _HomeStoreBase with _$HomeStore;
 
 abstract class _HomeStoreBase with Store {
-  final CryptoCoinsService _cryptoService = Get.find();
+  final CoinsService _cryptoService = Get.find();
   final List<String> popularCoins = [
     'bitcoin',
     'ethereum',
@@ -63,7 +62,7 @@ abstract class _HomeStoreBase with Store {
             : popularCoins;
 
     final uniqueCoins = coins.toSet().toList();
-    return uniqueCoins.isNotEmpty ? uniqueCoins : ['bitcoin']; // Fallback
+    return uniqueCoins.isNotEmpty ? uniqueCoins : ['bitcoin'];
   }
 
   @action
@@ -115,17 +114,13 @@ abstract class _HomeStoreBase with Store {
   Future<void> _selectInitialCoin() async {
     final favoriteStore = Get.find<FavoriteStore>();
 
-    // Hierarquia de seleção:
-    // 1. Primeiro favorito
     if (favoriteStore.favoriteIds.isNotEmpty) {
       currentCoinId = favoriteStore.favoriteIds.first;
     }
-    // 2. Moedas especiais/populares
     else if (popularCoins.isNotEmpty) {
       final random = Random();
       currentCoinId = popularCoins[random.nextInt(popularCoins.length)];
     }
-    // 3. Fallback hardcoded
     else {
       currentCoinId = 'bitcoin';
     }
@@ -156,5 +151,4 @@ abstract class _HomeStoreBase with Store {
   @computed
   double get minYValue =>
       chartData.isEmpty ? 0 : chartData.map((spot) => spot.y).reduce(min) * 0.9;
-
 }

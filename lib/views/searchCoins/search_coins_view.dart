@@ -1,6 +1,6 @@
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/stores/favorite/favorite_store.dart';
-import 'package:coins_flutter_test/views/detail/coin_detail.dart';
+import 'package:coins_flutter_test/views/detail/coin_detail_view.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -8,8 +8,8 @@ import 'package:flutter_mobx/flutter_mobx.dart';
 import 'package:intl/intl.dart';
 import '../../stores/searchCoins/search_coins_store.dart';
 
-class SearchCoins extends GetView<SearchCoinsStore> {
-  const SearchCoins({super.key});
+class SearchCoinsView extends GetView<SearchCoinsStore> {
+  const SearchCoinsView({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -60,17 +60,14 @@ class SearchCoins extends GetView<SearchCoinsStore> {
                                 (_) => ListTile(
                                   onTap: () {
                                     Get.to(
-                                      () => CoinDetailScreen(coinId: crypto.id),
+                                      () => CoinDetailView(coinId: crypto.id),
                                     );
                                   },
                                   contentPadding: const EdgeInsets.symmetric(
                                     horizontal: 16,
                                     vertical: 8,
                                   ),
-                                  leading: CircleAvatar(
-                                    backgroundColor: Colors.grey[200],
-                                    child: Text(crypto.symbol.toUpperCase()),
-                                  ),
+                                  leading: _buildLeading(crypto),
                                   title: Column(
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
@@ -114,6 +111,28 @@ class SearchCoins extends GetView<SearchCoinsStore> {
         ],
       ),
     );
+  }
+
+  Widget _buildLeading(CoinModelHive crypto) {
+    return crypto.image != null && crypto.image!.isNotEmpty
+        ? ClipOval(
+          child: Image.network(
+            crypto.image!,
+            width: 48,
+            height: 48,
+            fit: BoxFit.cover,
+            errorBuilder: (context, error, stackTrace) {
+              return CircleAvatar(
+                backgroundColor: Colors.grey[200],
+                child: Text(crypto.symbol.toUpperCase()),
+              );
+            },
+          ),
+        )
+        : CircleAvatar(
+          backgroundColor: Colors.grey[200],
+          child: Text(crypto.symbol.toUpperCase()),
+        );
   }
 
   Widget _buildPriceRow(CoinModelHive crypto) {
@@ -257,9 +276,7 @@ class _PaginationControls extends StatelessWidget {
                   icon: const Icon(Icons.chevron_right),
                   onPressed:
                       controller.hasNextPage
-                          ? () async =>
-                              await controller
-                                  .nextPage() // Modificado
+                          ? () async => await controller.nextPage()
                           : null,
                 ),
               ],

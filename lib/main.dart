@@ -1,10 +1,10 @@
 import 'package:coins_flutter_test/models/coins/hive/coin_model_hive.dart';
 import 'package:coins_flutter_test/repository/cache_repository.dart';
 import 'package:coins_flutter_test/theme/app_theme.dart';
-import 'package:coins_flutter_test/views/detail/coin_detail.dart';
-import 'package:coins_flutter_test/views/favorite/favorite_page.dart';
-import 'package:coins_flutter_test/views/searchCoins/search_coins_page.dart';
-import 'package:coins_flutter_test/views/home/home_page.dart';
+import 'package:coins_flutter_test/views/detail/coin_detail_view.dart';
+import 'package:coins_flutter_test/views/favorite/favorite_view.dart';
+import 'package:coins_flutter_test/views/searchCoins/search_coins_view.dart';
+import 'package:coins_flutter_test/views/home/home_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:get/get.dart';
@@ -14,12 +14,9 @@ import 'bindings/app_bindings.dart';
 void main() async {
   await dotenv.load(fileName: ".env");
   await Hive.initFlutter();
-    await Hive.initFlutter();
-
   if (!Hive.isAdapterRegistered(0)) {
     Hive.registerAdapter(CoinModelHiveAdapter());
   }
-
   final cacheRepository = CacheRepository();
   await cacheRepository.init();
   runApp(MyApp());
@@ -35,19 +32,19 @@ class MyApp extends StatelessWidget {
       initialBinding: AppBindings(),
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
-      themeMode: ThemeMode.system,
+      themeMode: ThemeMode.dark,
       initialRoute: '/home',
       getPages: [
-        GetPage(name: '/home', page: () => HomePage(), binding: AppBindings()),
-        GetPage(name: '/favorites', page: () => FavoritesPage()),
- GetPage(
+        GetPage(name: '/home', page: () => HomeView(), binding: AppBindings()),
+        GetPage(name: '/favorites', page: () => FavoritesView()),
+        GetPage(
           name: '/detail/:coinId',
-          page: () => CoinDetailScreen(coinId: Get.parameters['coinId']!),
+          page: () => CoinDetailView(coinId: Get.parameters['coinId']!),
           binding: AppBindings(),
         ),
         GetPage(
           name: '/search',
-          page: () => SearchCoins(),
+          page: () => SearchCoinsView(),
           binding: AppBindings(),
         ),
       ],

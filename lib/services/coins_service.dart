@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart';
 import '../services/api_service.dart';
 
-class CryptoCoinsService {
+class CoinsService {
   final ApiService _apiService = Get.find();
   final CacheRepository _cacheRepository = Get.find();
 
@@ -106,6 +106,13 @@ class CryptoCoinsService {
     }
   }
 
+  Future<Map<String, dynamic>> searchCoins(String query) async {
+    final response = await _apiService.get(
+      'search?query=$query',
+    );
+    return response;
+  }
+
   Map<String, String> _buildQueryParams(int page, int perPage) {
     return {
       'vs_currency': 'usd',
@@ -127,7 +134,6 @@ class CryptoCoinsService {
     bool sparkline = false,
   }) async {
     try {
-      // Constrói os parâmetros da query
       final queryParams = <String, String>{
         'localization': localization.toString(),
         'tickers': tickers.toString(),
@@ -137,7 +143,6 @@ class CryptoCoinsService {
         'sparkline': sparkline.toString(),
       };
 
-      // Faz a chamada à API
       final response = await _apiService.get(
         'coins/$id',
         queryParameters: queryParams,
